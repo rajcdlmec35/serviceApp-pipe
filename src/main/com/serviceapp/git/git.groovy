@@ -3,7 +3,7 @@ package main.com.serviceapp.git
 def gitCheckout()
 {
     try{
-        checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '79d43e10-ce5b-4b14-93a0-7366ee201cbe', url: 'https://github.com/ITHelp-Stream/serviceApp.git']]]
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '2d2da1f8-e62f-4fe2-bb86-13b88b0c02e3', url: 'https://github.com/ITHelp-Stream/serviceApp.git']]])
         print "Successfully clone the Repository..Validate the logs..."
 	}
 	catch (error) {
