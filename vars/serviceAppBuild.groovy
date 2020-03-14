@@ -16,7 +16,7 @@ def call(body)
    def cre = new mavenBuild()
    def java = new jdk()
    def m2 = new maven()
-   
+   def arch = new artifact()
    
   stage ('Install all Devops Tools'){
 	try {
@@ -69,6 +69,17 @@ def call(body)
           def MVN_GOALS = "clean compile install"
           def POM_PATH = "${WORKSPACE}/sm-shop/pom.xml"
           cre.createMavenBuild("${POM_PATH}" ,"${MAVEN_VERSION}", "${MVN_GOALS}")
+          }
+          catch (Exception error){
+          wrap([$class: 'AnsiColorBuildWrapper']) {
+            print "[INFO]: ${error}"
+            throw error
+          }
+        }
+    }
+    stage ('Archiving Artifacts'){
+        try{
+          arch.archiveArtifacts()
           }
           catch (Exception error){
           wrap([$class: 'AnsiColorBuildWrapper']) {
