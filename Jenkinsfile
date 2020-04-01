@@ -1,10 +1,4 @@
 library('serviceapp-library')
-node {
-    stage 'Clone and Build'
-        sh 'echo deployed'
-      
-     }
-library('serviceapp-library')
 pipeline {
     agent any
 
@@ -13,10 +7,8 @@ pipeline {
             steps {
                 script {
                     String a = env.BRANCH_NAME
-                    if (a != 'master' || (a.substring(0,1) != 't')) {
+                    if ((a != 'master') || (a.substring(0,1) !="t")) {
                         echo a
-                    }else{
-                          echo 'kaam bn gya!!!!!';                    
                     }
                 }
             }
