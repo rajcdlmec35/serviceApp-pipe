@@ -10,7 +10,8 @@ pipeline {
                     if (a != 'master') {
                         echo a
                     }else{
-                          echo 'kaam bn gya!!!!!';                    
+                          echo 'kaam bn gya!!!!!';   
+                          echo a.substring(0,1);
                     }
                 }
             }
