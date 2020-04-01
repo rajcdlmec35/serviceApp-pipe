@@ -7,7 +7,7 @@ pipeline {
             steps {
                 script {
                     String a = env.BRANCH_NAME
-                    if (a != 'master') {
+                    if ((a != 'master') || (a.substring(0,1) !="m")) {
                         echo a
                     }else{
                           echo 'kaam bn gya!!!!!';   
