@@ -1,7 +1,5 @@
 def call(Map config = [:]) {
-    def repoName = config.repoName
-    def gitSshCredentials = 'jenkadm-github-test'
-    def cloneUrl = "git@github.worldpay.com:Worldpay/${repoName}.git"
+    def cloneUrl = "git@github.com:rajcdlmec35/helloworld.git"
     def buildTag = env.BUILD_NUMBER
     def branchNamePlaceholder = ''
     
