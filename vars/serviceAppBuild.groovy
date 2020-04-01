@@ -1,93 +1,132 @@
-#!/bin/groovy
+def call(Map config = [:]) {
+    def repoName = config.repoName
+    def testWithDocker = config.testWithDocker
+    def skipUnitTests = config.skipUnitTests
+    def runSonar = config.runSonar
+    def emailRecipientsList = config.emailRecipients
 
-import main.com.serviceapp.build.*
-import main.com.serviceapp.tools.*
-import main.com.serviceapp.git.*
-
-def call(body)
-{
-   def config = [:]
-   body.resolveStrategy = Closure.DELEGATE_FIRST
-   body.delegate = config
-   body()
-
-   timestamps {
-   def g = new git()
-   def cre = new mavenBuild()
-   def java = new jdk()
-   def m2 = new maven()
-   def arch = new artifact()
-   
-  stage ('Install all Devops Tools'){
-	try {
-            wrap([$class: 'AnsiColorBuildWrapper']) {
-            def VERSION = "JDK1.8"
-            java.setJavaHome("${VERSION}")
-
-          }
-        }
-        catch (error)
-        {
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-              echo "JAVA Initializing Failed..."
-              throw error
-          }
-        }
-		
-	try {
-            wrap([$class: 'AnsiColorBuildWrapper']) {
-            def VERSION = "Maven3"
-            m2.setMavenHome("${VERSION}")
-
-          }
-        }
-        catch (error)
-        {
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-              echo "Maven Initializing Failed..."
-              throw error
-          }
-        }
-  
-  }
- 
-  stage ('checkout Source Code from git'){
-  try {
-      g.gitCheckout()
-      echo "[SUCCESS] Source Code successfully downloaded"
-      }
-      catch (Exception error)
-      {
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-          echo "[ERROR] ${error}"
-          throw error
-          }
-      }
-    }
-  stage ('Building source Code'){
-  try{
-          def MVN_GOALS = "clean compile install"
-          def POM_PATH = "${WORKSPACE}/sm-shop/pom.xml"
-          cre.createMavenBuild("${POM_PATH}" ,"${MAVEN_VERSION}", "${MVN_GOALS}")
-          }
-          catch (Exception error){
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-            print "[INFO]: ${error}"
-            throw error
-          }
-        }
-    }
-    stage ('Archiving Artifacts'){
-        try{
-          arch.archiveArtifacts()
-          }
-          catch (Exception error){
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-            print "[INFO]: ${error}"
-            throw error
-          }
-        }
+    def gitSshCredentials = 'jenkadm-github-test'
+    def cloneUrl = "git@github.worldpay.com:Worldpay/${repoName}.git"
+    def nexusRegistry = "slgramidlnexs60.infoftps.com/springio"
+    def buildTag = env.BUILD_NUMBER
+    def branchNamePlaceholder = ''
+    
+	string a = env.BRANCH_NAME   
+    if(env.BRANCH_NAME != 'master' || a.substring(0,1)!="v") {
+        buildTag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+        branchNamePlaceholder = "-${env.BRANCH_NAME}"
     }
 
- }
+    pipeline {
+        agent { label 'Docker 18.06' }
+
+        parameters {
+            string(description: 'List of Email Report Recipients', name: 'recipients', defaultValue: emailRecipientsList)
+            booleanParam(defaultValue: false, description: 'Run Checkmarx Scan?', name: 'runCheckmarx')
+            string(description: 'Health Check URL', name: 'healthCheckUrl', defaultValue: "https://mds-ms-dev-demographics.nonprod.nb01.local/${repoName}${branchNamePlaceholder}/actuator/health")
+        }
+
+        tools {
+            maven 'maven-3.5.2-pugrarjenkap01'
+            jdk 'jdk-10.0.2'
+        }
+
+        environment {
+            MAVEN_OPTS = '--add-modules java.xml.bind -Xmx1024m -XX:MaxPermSize=512m -Djdk.tls.client.protocols=TLSv1.2 -Dhttps.protocols=TLSv1.2 -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true'
+            REPORT_FILE= "${WORKSPACE}/index.html"
+            MDS_TEST_IMAGE_NAME="mds-microservice-test-${repoName}${branchNamePlaceholder}-image"
+            MDS_TEST_CONTAINER_NAME="test-${repoName}${branchNamePlaceholder}"
+            BUILD_TAG = "${buildTag}"
+            BRANCH_NAME_PLACEHOLDER = "${branchNamePlaceholder}"
+        }
+
+        stages {
+            stage('Create report file') {
+                steps {
+                    createReportFile repo: repoName, branch: env.BRANCH_NAME
+                }
+            }
+            
+        stage('Checkmarx scan'){
+                when {
+                    expression { params.runCheckmarx == true }
+                }
+
+                agent {
+                    label "stgramidlnexs60.infoftps.com"
+                }
+
+                steps{
+                 checkMarxScan()
+                }
+            } 
+
+            stage('Test with docker') {
+                when {
+                    expression { testWithDocker == true }
+                }
+
+                steps {
+                    runTestsWithDocker image: MDS_TEST_IMAGE_NAME, container: MDS_TEST_CONTAINER_NAME, reportFile: REPORT_FILE
+                }
+            }
+
+            stage ('Publish unit test results') {
+                steps {
+                    publishJUnitTestResults reportFile: REPORT_FILE
+                }
+            }
+
+            stage('Build src') {
+                steps {
+                    runMavenBuild sonar: runSonar, skipTests: skipUnitTests, reportFile: REPORT_FILE
+                }
+            }
+
+            stage('Build image') {
+                steps {
+                    buildDockerImage repo: repoName, registry: nexusRegistry, tag: buildTag, reportFile: REPORT_FILE
+                }
+            }
+
+            stage('Push image and update k8s resources yaml') {
+                steps {
+                    pushDockerImage repo: repoName, registry: nexusRegistry, tag: buildTag, reportFile: REPORT_FILE
+                    resolveVariablesInFile filePath: 'resources.yaml', reportFile: REPORT_FILE
+                    resolveVariablesInFile filePath: 'deployit-manifest.xml', reportFile: REPORT_FILE
+                }
+            }
+
+            stage('Publish to XL Deploy') {
+                steps {
+                    deployToXLD repo: repoName, tag: buildTag, reportFile: REPORT_FILE
+                }
+            }
+
+            stage('Deploy to Kubernetes') {
+                steps {
+                    deployToKubernetesViaXLD environmentId: 'MDS/MDS_POC_AWS', packageId: "MDS_POC/${repoName}${branchNamePlaceholder}/${env.BUILD_NUMBER}"
+                }
+            }
+
+            stage('Health Check') {
+                steps {
+                    springHealthCheck url: params.healthCheckUrl, reportFile: REPORT_FILE
+                }
+            }
+
+            /*stage('Qualys Security Scan') {
+                steps {
+                    qualysSecurityScan repo: repoName, tag: buildTag
+                }
+            }*/
+        }
+
+        post {
+            always {
+                sendEmailNotification repo: repoName, branch: env.BRANCH_NAME, recipients: params.recipients, reportFile: REPORT_FILE
+                deleteDir() /* Clean up workspace */
+            }
+        }
+    }
 }
