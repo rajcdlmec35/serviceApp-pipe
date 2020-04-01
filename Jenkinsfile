@@ -9,7 +9,7 @@ pipeline {
                     if (env.BRANCH_NAME != 'master') {
                       String a = env.BRANCH_NAME
                     
-                        echo '$a'
+                        echo $a
                     }
                 }
             }
