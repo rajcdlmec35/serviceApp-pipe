@@ -3,12 +3,11 @@ pipeline {
     agent any
 
     stages {
-        stage('test3') {
+        stage('Not to deploy on master or any other branch which starts with t') {
             steps {
                 script {
-                    if (env.BRANCH_NAME != 'master') {
-                      String a = env.BRANCH_NAME
-                    
+                    String a = env.BRANCH_NAME
+                    if (a != 'master' || (a.substring(0,1) != 't')) {
                         echo a
                     }
                 }
