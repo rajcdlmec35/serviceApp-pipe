@@ -5,13 +5,20 @@ def call(body) {
     body.delegate = pipelineParams
     body()
 
+    pipeline {
+        agent any
+        stages {
+            stage('checkout git') {
+                steps {
     node {
-    
-
     try {
         echo "test"            
     } finally {
         echo "test"
     }
 }
+}
+            }
+        }
+    }
 }
