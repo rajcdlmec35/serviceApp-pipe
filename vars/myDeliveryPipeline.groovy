@@ -6,12 +6,12 @@ def call(body) {
     body()
 
     node {
-    //some var declarations... or whatever
+    
 
     try {
-        //do some stuff, run your tests, etc.            
+        echo "test"            
     } finally {
-        junit 'build/test-results/test/*.xml'
+        echo "test"
     }
 }
 }
