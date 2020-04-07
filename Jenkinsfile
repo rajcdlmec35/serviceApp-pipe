@@ -1,4 +1,3 @@
-library('serviceapp-library')
 pipeline {
     agent any
 
@@ -7,11 +6,11 @@ pipeline {
             steps {
                 script {
                     
-                    if(!env.BRANCH_NAME =~ /^v([0-9]+\.[0-9]+\.[0-9]+)/) {
+                    if(!(env.BRANCH_NAME =~ /^v([0-9]+\.[0-9]+\.[0-9]+)/)) {
         buildTag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         branchNamePlaceholder = "-${env.BRANCH_NAME}"
 	    echo "test"
-		    }else {echo "tested"}
+		    }else { echo "tested"}
                 }
             }
         }
