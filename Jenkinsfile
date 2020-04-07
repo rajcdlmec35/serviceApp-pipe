@@ -7,7 +7,7 @@ pipeline {
             steps {
                 script {
                     
-                    if(env.BRANCH_NAME !=~ /v\/\d*\.\d*.\d*./) {
+                    if(env.BRANCH_NAME !~ /v\/\d*\.\d*.\d*./) {
         buildTag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         branchNamePlaceholder = "-${env.BRANCH_NAME}"
 	    echo "test"
