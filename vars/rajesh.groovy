@@ -1,4 +1,4 @@
-    def call() {
+    def call(body) {
    /* def repoName = config.repoName
     def testWithDocker = config.testWithDocker
     def skipUnitTests = config.skipUnitTests
@@ -8,6 +8,10 @@
     def gitSshCredentials = 'jenkadm-github-test'
     def cloneUrl = "git@github.worldpay.com:Worldpay/${repoName}.git"
     def nexusRegistry = "slgramidlnexs60.infoftps.com/springio" */
+    def pipelineParams= [:]
+    body.resolveStrategy = Closure.DELEGATE_FIRST
+    body.delegate = pipelineParams
+    body()
     def buildTag = env.BUILD_NUMBER
     def branchNamePlaceholder = ''
 
