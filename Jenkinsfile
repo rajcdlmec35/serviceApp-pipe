@@ -6,10 +6,12 @@ pipeline {
         stage('Not to deploy on master or any other branch which starts with t') {
             steps {
                 script {
-                    String a = env.BRANCH_NAME
-                    if (a != 'master' && a.substring(0,1)!="t"){
-                            echo a
-                    }
+                    
+                    if(!(env.BRANCH_NAME.startsWith("v"))) {
+        buildTag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+        branchNamePlaceholder = "-${env.BRANCH_NAME}"
+	    echo "test"
+    }
                 }
             }
         }
