@@ -11,7 +11,7 @@ pipeline {
         buildTag = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
         branchNamePlaceholder = "-${env.BRANCH_NAME}"
 	    echo "test"
-		    }else { echo "testing"}
+		    }
                 }
             }
         }
