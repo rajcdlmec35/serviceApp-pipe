@@ -6,19 +6,18 @@ def call(body) {
     body()
 
     pipeline {
-        agent any
-        stages {
-            stage('checkout git') {
-                steps {
-    node {
-    try {
-        echo "test"            
-    } finally {
+  ...
+  stages {
+    stage('HelloWorld') {
+      steps {
+        echo 'Hello World'
+      }
+    }
+    stage('git clone') {
+      steps {
         echo "test"
+      }
     }
+  }
 }
-}
-            }
-        }
-    }
 }
