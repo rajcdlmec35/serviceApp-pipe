@@ -1,4 +1,4 @@
-    def call(Map config = [:]) {
+    def call() {
    /* def repoName = config.repoName
     def testWithDocker = config.testWithDocker
     def skipUnitTests = config.skipUnitTests
