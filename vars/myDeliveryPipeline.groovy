@@ -5,13 +5,13 @@ def call(body) {
     body.delegate = pipelineParams
     body()
 
-    pipeline {
-        agent any
-        stages {
-            stage('checkout git') {
-                steps {
-                    sh 'echo "shared pipeline"'
-                }
-            }
+    node {
+    //some var declarations... or whatever
+
+    try {
+        //do some stuff, run your tests, etc.            
+    } finally {
+        junit 'build/test-results/test/*.xml'
     }
+}
 }
