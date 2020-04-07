@@ -5,19 +5,13 @@ def call(body) {
     body.delegate = pipelineParams
     body()
 
-    pipeline {
-  ...
-  stages {
-    stage('HelloWorld') {
-      steps {
-        echo 'Hello World'
-      }
-    }
-    stage('git clone') {
-      steps {
-        echo "test"
-      }
-    }
+   node {
+  stage('HelloWorld') {
+    echo 'Hello World'
+  }
+
+  stage('git clone') {
+  echo "test"
   }
 }
 }
